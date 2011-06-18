@@ -1,2 +1,4 @@
+git init ~/bin
+git remote add origin git@github.com:richielokay/bin.git
 vim ~/bashrc
 	. ~/bin/dotfiles/bashrc
