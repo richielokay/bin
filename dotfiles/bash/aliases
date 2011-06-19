@@ -231,4 +231,5 @@ function __rm_single_file(){
     fi
 }
 
-
+#Drush
+alias drush="drush --package-handler=git_drupalorg"
