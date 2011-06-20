@@ -1,5 +1,5 @@
 git init ~/bin
 git remote add origin git@github.com:richielokay/bin.git
-vim ~/bashrc
+vim ~/.bashrc
 	. ~/bin/dotfiles/bashrc 
 export PATH=$PATH:/home/username/bin/drush
