@@ -1,5 +1,4 @@
 <?php
-// $Id: variable.drush.inc,v 1.21 2011/01/03 05:48:08 greg1anderson Exp $
 
 /**
  * Implementation of hook_drush_help().

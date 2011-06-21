@@ -1,4 +1,3 @@
-// $Id: README.txt,v 1.60 2011/01/22 19:44:03 jonhattan Exp $
 
 DESCRIPTION
 -----------

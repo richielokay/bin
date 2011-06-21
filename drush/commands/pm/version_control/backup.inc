@@ -1,5 +1,4 @@
 <?php
-// $Id: backup.inc,v 1.20 2011/01/29 03:14:40 weitzman Exp $
 
 /**
  * @file Drush pm directory copy backup extension

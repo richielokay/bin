@@ -1,5 +1,4 @@
 <?php
-// $Id: sql.drush.inc,v 1.101 2011/01/26 04:32:36 weitzman Exp $
 
 /**
  * @file Drush sql commands

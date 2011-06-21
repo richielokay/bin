@@ -1,5 +1,4 @@
 <?php
-// $Id: bzr.inc,v 1.13 2011/01/26 19:17:40 jonhattan Exp $
 
 /**
  * @file Drush pm Bazaar extension

@@ -1,5 +1,4 @@
 <?php
-// $Id: search.drush.inc,v 1.7 2010/12/30 18:28:08 greg1anderson Exp $
 
 function drush_core_search_status() {
   list($remaining, $total) = _drush_core_search_status();

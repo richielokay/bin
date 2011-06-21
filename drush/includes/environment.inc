@@ -1,5 +1,4 @@
 <?php
-// $Id: environment.inc,v 1.121 2011/01/29 20:16:35 weitzman Exp $
 
 /**
  * @file

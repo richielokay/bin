@@ -1,5 +1,4 @@
 <?php
-// $Id: sitealias.drush.inc,v 1.28 2011/01/25 19:32:08 greg1anderson Exp $
 
 /**
  * @file

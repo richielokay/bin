@@ -1,5 +1,4 @@
 <?php
-// $Id: update_7.inc,v 1.30 2010/12/30 18:28:08 greg1anderson Exp $
 /**
  * @file
  *   Update.php for provisioned sites.

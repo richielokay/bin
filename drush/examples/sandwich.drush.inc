@@ -1,5 +1,4 @@
 <?php
-// $Id: sandwich.drush.inc,v 1.11 2011/01/07 00:11:07 greg1anderson Exp $
 
 /**
  * @file

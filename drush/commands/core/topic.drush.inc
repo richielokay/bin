@@ -1,5 +1,4 @@
 <?php
-// $Id: topic.drush.inc,v 1.8 2010/12/25 07:34:38 weitzman Exp $
 
 /**
  * @file

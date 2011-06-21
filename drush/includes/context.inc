@@ -1,5 +1,4 @@
 <?php
-// $Id: context.inc,v 1.39 2011/01/27 15:34:15 weitzman Exp $
 /**
  * @file
  * The Drush context API implementation.

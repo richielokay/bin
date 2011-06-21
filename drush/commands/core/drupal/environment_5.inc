@@ -1,5 +1,4 @@
 <?php
-// $Id: environment_5.inc,v 1.13 2010/11/10 02:55:41 weitzman Exp $
 /**
  * @file
  *   Specific functions for a drupal 5 environment.

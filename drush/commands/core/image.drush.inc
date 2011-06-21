@@ -1,5 +1,4 @@
 <?php
-// $Id: image.drush.inc,v 1.2 2010/12/09 01:06:24 greg1anderson Exp $
 
 /**
  * @file

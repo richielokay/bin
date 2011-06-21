@@ -1,5 +1,4 @@
 <?php
-// $Id: wget.inc,v 1.25 2010/12/24 21:42:05 greg1anderson Exp $
 
 /**
  * @file Drush PM Wget extension

@@ -1,5 +1,4 @@
 <?php
-// $Id: site_install_7.inc,v 1.7 2010/12/27 20:08:34 weitzman Exp $
 
 /**
  * Install Drupal 7+

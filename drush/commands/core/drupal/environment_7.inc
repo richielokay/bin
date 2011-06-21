@@ -1,5 +1,4 @@
 <?php
-// $Id: environment_7.inc,v 1.16 2010/10/15 09:04:37 jonhattan Exp $
 /**
  * @file
  *   Specific functions for a drupal 7 environment.
@@ -52,6 +51,7 @@ function drush_check_module_dependencies($modules, $module_info) {
         }
       }
     }
+    $status[$key]['unmet-dependencies'] = $unmet_dependencies;
     $status[$key]['dependencies'] = array_keys($dependencies);
   }
 

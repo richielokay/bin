@@ -1,5 +1,4 @@
 <?php
-// $Id: updatecode.pm.inc,v 1.46 2011/01/11 05:04:09 weitzman Exp $
 
 /**
  * Command callback. Displays update status info and allows to update installed

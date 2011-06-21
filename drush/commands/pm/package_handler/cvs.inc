@@ -1,5 +1,4 @@
 <?php
-// $Id: cvs.inc,v 1.26 2011/01/26 19:17:40 jonhattan Exp $
 
 /**
  * @file Drush PM CVS extension

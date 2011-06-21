@@ -1,5 +1,4 @@
 <?php
-// $Id: drupal_5.inc,v 1.10 2010/11/24 10:00:02 jonhattan Exp $
 
 function pm_update_filter(&$project) {
   $update = FALSE;
