@@ -1,2 +1,3 @@
 export EDITOR="mvim"
-export PATH=~/bin:$PATH
+export PATH=~/bin:$PATH 
+export PATH=$PATH:~/bin/drush
