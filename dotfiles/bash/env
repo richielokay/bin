@@ -1,3 +1,4 @@
 export EDITOR="mvim"
 export PATH=~/bin:$PATH 
-export PATH=$PATH:~/bin/drush
+export PATH="/Applications/MAMP/Library/bin:/Applications/MAMP/bin/php5.3/bin:$PATH"
+export PATH="$PATH:~/bin/drush:/usr/local/bin"

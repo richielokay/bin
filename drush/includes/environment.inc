@@ -92,8 +92,6 @@ define('DRUSH_BOOTSTRAP_DRUPAL_DATABASE', 4);
 /**
  * Fully initialize Drupal.
  *
- * This is the default bootstrap phase all commands will try to reach,
- * unless otherwise specified.
  * This is analogous to the DRUPAL_BOOTSTRAP_FULL bootstrap phase in
  * Drupal.
  *
@@ -104,6 +102,9 @@ define('DRUSH_BOOTSTRAP_DRUPAL_FULL', 5);
 
 /**
  * Log in to the initialiased Drupal site.
+ *
+ * This is the default bootstrap phase all commands will try to reach,
+ * unless otherwise specified.
  *
  * This bootstrap phase is used after the site has been
  * fully bootstrapped.
@@ -388,13 +389,15 @@ function drush_bootstrap_error($code, $message = null) {
  * handler takes over.
  */
 function drush_error_handler($errno, $message, $filename, $line, $context) {
-  // If the @ error suppression operator was used, error_reporting will have
-  // been temporarily set to 0.
-  if (error_reporting() == 0) {
-    return;
+  // E_DEPRECATED was added in PHP 5.3. Drupal 6 will not fix all the
+  // deprecated errors, but suppresses them. So we suppress them as well.
+  if (defined('E_DEPRECATED')) {
+    $errno = $errno & ~E_DEPRECATED;
   }
 
-  if ($errno & (E_ALL)) {
+  // "error_reporting" is usually set in php.ini, but may be changed by
+  // drush_errors_on() and drush_errors_off().
+  if ($errno & error_reporting()) {
     // By default we log notices.
     $type = drush_get_option('php-notices', 'notice');
 
@@ -516,8 +519,8 @@ function _drush_bootstrap_drush_validate() {
  * in drushrc.php. See examples/example.drushrc.php.
  */
 function drush_environment_check_os() {
-  if (substr(PHP_OS, 0, 3) == 'WIN' && drush_get_option('check_os', TRUE)) {
-    $msg = 'Drush has significant limitations on Windows. We seek a co-maintainer to remedy them. See http://drupal.org/project/drush for more information, and for instructions on disabling this warning.';
+  if (substr(PHP_OS, 0, 3) == 'WIN' && (drush_get_option('check_os', TRUE) !== 'i-want-4.x')) {
+    $msg = 'Drush 4.x has significant limitations on Windows; it is not advisable to use on that platform. Substantial progress has been made towards supporing Windows on the 5.x branch; please upgrade. See http://drupal.org/project/drush for more information.';
     drush_log(dt($msg), 'warning');
   }
 }
@@ -578,6 +581,9 @@ function drush_environment_table_inc() {
  * the execution flow to be able to take affect/
  */
 function _drush_bootstrap_drush() {
+  // Create an alias '@none' to represent no Drupal site
+  _drush_sitealias_cache_alias('none', array('root' => '', 'uri' => ''));
+
   // Set the terminal width, used for wrapping table output.
   // Normally this is exported using tput in the drush script.
   // If this is not present we do an additional check using stty here.
@@ -600,6 +606,24 @@ function _drush_bootstrap_drush() {
 
   $drush_info = drush_read_drush_info();
   define('DRUSH_VERSION', $drush_info['drush_version']);
+  $version_parts = explode('.', DRUSH_VERSION);
+  define('DRUSH_MAJOR_VERSION', $version_parts[0]);
+  define('DRUSH_MINOR_VERSION', $version_parts[1]);
+
+  // prime the CWD cache
+  drush_cwd();
+
+  /* Copy ETC_PREFIX and SHARE_PREFIX from environment variables if available.
+   * This alters where we check for server-wide config and alias files.
+   * Used by unit test suite to provide a clean environment.
+   */
+  if (getenv('ETC_PREFIX')) drush_set_context('ETC_PREFIX', getenv('ETC_PREFIX'));
+  if (getenv('SHARE_PREFIX')) drush_set_context('SHARE_PREFIX', getenv('SHARE_PREFIX'));
+
+  drush_set_context('DOC_PREFIX', DRUSH_BASE_PATH);
+  if (!file_exists(DRUSH_BASE_PATH . '/README.txt') && file_exists(drush_get_context('SHARE_PREFIX', '/usr') . '/share/doc/drush') . '/README.txt') {
+    drush_set_context('DOC_PREFIX', drush_get_context('SHARE_PREFIX', '/usr') . '/share/doc/drush');
+  }
 
   // Load a drushrc.php file in the drush.php's directory.
   drush_load_config('drush');
@@ -659,9 +683,9 @@ function _drush_bootstrap_global_options() {
   drush_set_context('DRUSH_VERBOSE',     drush_get_option(array('v', 'verbose', 'd', 'debug'), FALSE));
   drush_set_context('DRUSH_DEBUG', drush_get_option(array('d', 'debug')));
 
-  // Backend implies affirmative
-  drush_set_context('DRUSH_AFFIRMATIVE', drush_get_option(array('y', 'yes', 'b', 'backend'), FALSE));
+  // Backend implies affirmative unless negative is explicitly specified
   drush_set_context('DRUSH_NEGATIVE',    drush_get_option(array('n', 'no'), FALSE));
+  drush_set_context('DRUSH_AFFIRMATIVE', drush_get_option(array('y', 'yes'), FALSE) || (drush_get_context('DRUSH_BACKEND') && !drush_get_context('DRUSH_NEGATIVE')));
   drush_set_context('DRUSH_SIMULATE',    drush_get_option(array('s', 'simulate'), FALSE));
 
   // Suppress colored logging if --nocolor option is explicitly given or if
@@ -716,9 +740,6 @@ function _drush_bootstrap_drupal_root() {
   $drupal_root = drush_set_context('DRUSH_DRUPAL_ROOT', drush_bootstrap_value('drupal_root'));
   define('DRUPAL_ROOT', $drupal_root);
 
-  // Save original working dir case some command wants it.
-  drush_set_context('DRUSH_OLDCWD', getcwd());
-
   chdir($drupal_root);
   drush_load_config('drupal');
   require_once DRUPAL_ROOT . '/' . DRUSH_DRUPAL_BOOTSTRAP;
@@ -764,8 +785,15 @@ function _drush_bootstrap_drupal_site_validate() {
     $drupal_base_url += array(
       'path' => NULL,
       'host' => NULL,
+      'port' => NULL,
     );
     $_SERVER['HTTP_HOST'] = $drupal_base_url['host'];
+
+    if ($drupal_base_url['port']) {
+      $_SERVER['HTTP_HOST'] .= ':' . $drupal_base_url['port'];
+    }
+    $_SERVER['SERVER_PORT'] = $drupal_base_url['port'];
+
     if (array_key_exists('path', $drupal_base_url)) {
       $_SERVER['PHP_SELF'] = $drupal_base_url['path'] . '/index.php';
     }
@@ -824,9 +852,6 @@ function _drush_bootstrap_do_drupal_site() {
 function _drush_bootstrap_drupal_site() {
   _drush_bootstrap_do_drupal_site();
   _drush_bootstrap_redo_drupal_site();
-
-  // Set warning for Windows users. We have already loaded site-specific drushrc.
-  drush_environment_check_os();
 }
 
 /**
@@ -876,6 +901,11 @@ function _drush_bootstrap_drupal_configuration() {
   global $conf, $drush_conf_override;
 
   drupal_bootstrap(DRUPAL_BOOTSTRAP_CONFIGURATION);
+
+  // Unset drupal error handler and restore drush's one.
+  if (drush_drupal_major_version() >= 7) {
+    restore_error_handler();
+  }
 
   // Overriding the $conf array from drupal CONFIGURATION bootstrap with the
   // Overrides we collected on the loaded config files on DRUSH_BOOTSTRAP_DRUSH
@@ -956,6 +986,11 @@ function _drush_bootstrap_drupal_full() {
   drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
   ob_end_clean();
 
+  // Unset drupal error handler and restore drush's one.
+  if (drush_drupal_major_version() == 6) {
+    restore_error_handler();
+  }
+
   // If needed, prod module_implements() to recognize our system_watchdog() implementation.
   $dogs = module_implements('watchdog');
   if (!in_array('system', $dogs)) {
@@ -981,9 +1016,13 @@ function _drush_bootstrap_drupal_login() {
 /**
  * Returns the current working directory.
  *
- * TODO: Could cache result, but it isn't really expensive.
+ * This is the directory as it was when drush was started, not the
+ * directory we are currently in. For that, use getcwd() directly.
  */
 function drush_cwd() {
+  if ($path = drush_get_context('DRUSH_OLDCWD')) {
+    return $path;
+  }
   // We use PWD if available because getcwd() resolves symlinks, which
   // could take us outside of the Drupal root, making it impossible to find.
   // $_SERVER['PWD'] isn't set on windows and generates a Notice.
@@ -994,6 +1033,9 @@ function drush_cwd() {
 
   // Convert windows paths.
   $path = _drush_convert_path($path);
+
+  // Save original working dir case some command wants it.
+  drush_set_context('DRUSH_OLDCWD', $path);
 
   return $path;
 }
@@ -1162,7 +1204,7 @@ function drush_valid_db_credentials() {
         }
       }
       else {
-        drush_log('!type database type is unsupported.', array('!type' => $type), 'bootstrap');
+        drush_log(dt('!type database type is unsupported.', array('!type' => $type)), 'bootstrap');
         return FALSE;
       }
       // Verify connection settings.
@@ -1335,6 +1377,21 @@ function drush_server_home() {
   return $home;
 }
 
+/*
+ * The path to the global cache directory.
+ */
+function drush_directory_cache() {
+  if (getenv('CACHE_PREFIX')) {
+    return getenv('CACHE_PREFIX') . '/cache';
+  }
+  elseif ($home = drush_server_home()) {
+    return "$home/.drush/cache";
+  }
+  else {
+    return FALSE;
+  }
+}
+
 /**
  * Get complete information for all available extensions (modules and themes).
  *
@@ -1344,6 +1401,30 @@ function drush_server_home() {
 function drush_get_extensions() {
   drush_include_engine('drupal', 'environment');
   return array_merge(drush_get_modules(), drush_get_themes());
+}
+
+/**
+ * Test compatibility of a extension with version of drupal core and php.
+ *
+ * @param $file Extension object as returned by system_rebuild_module_data().
+ * @return TRUE if the extension is incompatible.
+ */
+function drush_extension_check_incompatibility($file) {
+  if (!isset($file->info['core'])
+       || $file->info['core'] != DRUPAL_CORE_COMPATIBILITY
+       || version_compare(phpversion(), $file->info['php']) < 0) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ *
+ */
+function drush_drupal_required_modules($modules) {
+  drush_include_engine('drupal', 'environment');
+  return _drush_drupal_required_modules($modules);
 }
 
 /**

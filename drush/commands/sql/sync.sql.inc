@@ -103,11 +103,11 @@ function sql_drush_sql_sync_sanitize($site) {
       // We need a different sanitization query for Postgres and Mysql.
       $db_driver = $site_settings['databases']['default']['default']['driver'];
       if ($db_driver == 'pgsql') {
-        $email_map = array('%uid' => "' || uid || '", '%mail' => "' || replace(mail, '@', '_') || '", '%login' => "' || replace(login, ' ', '_') || '");
+        $email_map = array('%uid' => "' || uid || '", '%mail' => "' || replace(mail, '@', '_') || '", '%name' => "' || replace(name, ' ', '_') || '");
         $newmail =  "'" . str_replace(array_keys($email_map), array_values($email_map), $newemail) . "'";
       }
       else {
-        $email_map = array('%uid' => "', uid, '", '%mail' => "', replace(mail, '@', '_'), '", '%login' => "', replace(login, ' ', '_'), '");
+        $email_map = array('%uid' => "', uid, '", '%mail' => "', replace(mail, '@', '_'), '", '%name' => "', replace(name, ' ', '_'), '");
         $newmail =  "concat('" . str_replace(array_keys($email_map), array_values($email_map), $newemail) . "')";
       }
     }
@@ -153,9 +153,15 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
     $target_rsync_options = array('ssh-options' => $target_remote_ssh_options);
 
     if (empty($source_db_url)) {
+      if (empty($source_settings)) {
+        return drush_set_error('DRUSH_ALIAS_NOT_FOUND', dt('Error: no alias record could be found for !source', array('!source' => $source)));
+      }
       return drush_set_error('DRUSH_DATABASE_NOT_FOUND', dt('Error: no database record could be found for !source', array('!source' => $source)));
     }
     if (empty($target_db_url)) {
+      if (empty($target_db_url)) {
+        return drush_set_error('DRUSH_ALIAS_NOT_FOUND', dt('Error: no alias record could be found for !destination', array('!destination' => $destination)));
+      }
       return drush_set_error('DRUSH_DATABASE_NOT_FOUND', dt('Error: no database record could be found for !destination', array('!destination' => $destination)));
     }
 
@@ -339,8 +345,9 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
 
     // Call sql-dump, either on the local machine or remotely via ssh, as appropriate.
     if (!empty($dump_exec)) {
-      drush_op_system($dump_exec);
-      // TODO: IF FAILURE THEN ABORT
+      if (drush_op_system($dump_exec)) {
+        return drush_set_error('DRUSH_SQL_DUMP_FAIL', 'Database dump failed');
+      }
     }
 
     // If the sql-dump was remote, then rsync the file over to the local machine.
@@ -378,17 +385,8 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
       $pre_import_commands = '';
       $create_db = drush_get_option('create-db');
       if (isset($create_db)) {
-        $create_db_target = $target_db_url;
-        $create_db_target['database'] = '';
-        $db_superuser = drush_get_option(array('db-su', 'target-db-su'));
-        if (isset($db_superuser)) {
-          $create_db_target['username'] = $db_superuser;
-        }
-        $db_su_pw = drush_get_option(array('db-su-pw', 'target-db-su-pw'));
-        if (isset($db_su_pw)) {
-          $create_db_target['password'] = $db_su_pw;
-        }
-        $db_su_connect = _drush_sql_connect($create_db_target);
+        $create_db_su = drush_sql_su($target_db_url);
+        $db_su_connect = _drush_sql_connect($create_db_su);
         $pre_import_sql = drush_sql_build_createdb_sql($target_db_url);
         $pre_import_commands = sprintf('echo "%s" | %s; ', $pre_import_sql, $db_su_connect);
       }

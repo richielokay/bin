@@ -21,6 +21,8 @@
  *   $ drush @dev status
  *   $ drush --root=/path/to/drupal --uri=dev.mydrupalsite.com status
  *
+ * See the --uri option documentation below for hints on setting its value.
+ *
  * Any option that can be placed on the drush commandline
  * can also appear in an alias definition.
  *
@@ -46,6 +48,11 @@
  *   3. Inside the sites folder of any bootstrapped Drupal site,
  *      or any local Drupal site indicated by an alias used as
  *      a parameter to a command
+ *
+ * Folders and files containing other versions of drush in their names will
+ * be *skipped* (e.g. mysite.aliases.drush4rc.php or drush4/mysite.aliases.drushrc.php).
+ * Names containing the current version of drush (e.g. mysite.aliases.drush5rc.php)
+ * will be loaded.
  *
  * Files stored in these locations can be used to create aliases
  * to local and remote Drupal installations.  These aliases can be
@@ -105,14 +112,24 @@
  *
  *   $ drush -r /path/to/drupal site-alias @sites
  *
+ * The built-in alias "@none" represents the state of no Drupal site;
+ * to ignore the site at the cwd and just see default drush status:
+ *
+ *   $ drush @none status
+ *
  * See 'drush help site-alias' for more options for displaying site
  * aliases.
  *
  * Although most aliases will contain only a few options, a number
  * of settings that are commonly used appear below:
  *
- * - 'uri': This should always be the same as the site's folder name
- *     in the 'sites' folder.
+ * - 'uri': In Drupal 7, the value of --uri should always be the same as 
+ *     when the site is being accessed from a web browser (e.g. http://mysite.org,
+ *     although the http:// is optional).  In Drupal 6, the value of --uri should 
+ *     always be the same as the site's folder name in the 'sites' folder
+ *     (e.g. default); it is best if the site folder name matches the
+ *     URI from the browser, and is consistent on every instance of the
+ *     same site (e.g. also use sites/mysite.org for http://dev.mysite.org).
  * - 'root': The Drupal root; must not be specified as a relative path.
  * - 'remote-port': If the database is remote and 'db-url' contains
  *     a tunneled port number, put the actual database port number
@@ -141,13 +158,12 @@
  *     record.  Drush will look up the 'databases' record if it is not specified.
  * - 'path-aliases': An array of aliases for common rsync targets.
  *   Relative aliases are always taken from the Drupal root.
- *     '%drush': The path to the folder where drush is stored.  Optional;
- *       defaults to the folder containing the running script.  Always be sure
- *       to set '%drush' if the path to drush is different on the remote server.
- *     '%drush-script': The path to the 'drush' script (used by backend invoke);
- *       default is 'drush' on remote machines, or the full path to drush.php on
- *       the local machine.  Note that you only need to define one of '%drush'
- *       or '%drush-script', as drush can infer one from the other.
+ *     '%drush-script': The path to the 'drush' script, or to 'drush.php' or
+ *       'drush.bat', as desired.  This is used by backend invoke when drush
+ *       runs a drush command.  The default is 'drush' on remote machines, or 
+ *       the full path to drush.php on the local machine.
+ *     '%drush': A read-only property: points to the folder that the drush script
+ *       is stored in.
  *     '%dump-dir': Path to directory that "drush sql-sync" should use to store
  *       sql-dump files. Helpful filenames are auto-generated.
  *     '%dump': Path to the file that "drush sql-sync" should use to store sql-dump file.

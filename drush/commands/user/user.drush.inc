@@ -379,6 +379,7 @@ function drush_user_create($name) {
       $new_user_object = user_save(NULL, $new_user, NULL);
       if ($new_user_object !== FALSE) {
         _drush_user_print_info($new_user_object->uid);
+        return $new_user_object->uid;
       }
       else {
         drush_set_error("Could not create a new user account with the name " . $name . "!");
@@ -473,7 +474,9 @@ function drush_user_login($name = NULL) {
   }
 
   if ($user !== FALSE) {
-    drush_print(user_pass_reset_url($user));
+    $link = user_pass_reset_url($user);
+    drush_print($link);
+    return $link;
   }
   else {
     drush_set_error("The user account with the name " . $name . " could not be loaded!");
@@ -525,7 +528,7 @@ function _drush_user_print_info($uid) {
     $userinfo_short['User roles'] = implode(', ', $userinfo->roles);
     $userinfo->status ? $userinfo_short['User status'] = 'active' : $userinfo_short['User status'] = 'blocked';
     drush_print_table(drush_key_value_to_array_table($userinfo_short));
-    drush_print_pipe("$userinfo->name, $userinfo->uid, $userinfo->mail, $userinfo->status, \"" . implode(', ', $userinfo->roles) . "\"\n");
+    drush_print_pipe("$userinfo->name,$userinfo->uid,$userinfo->mail,$userinfo->status,\"" . implode(',', $userinfo->roles) . "\"\n");
   }
 }
 

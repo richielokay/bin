@@ -1,30 +1,6 @@
 <?php
 
 /**
- * Implementation of hook_drush_help().
- *
- * This function is called whenever a drush user calls
- * 'drush help <name-of-your-command>'
- *
- * @param
- *   A string with the help section (prepend with 'drush:')
- *
- * @return
- *   A string with the help text for your command.
- */
-function variable_drush_help($section) {
-  switch ($section) {
-    case 'drush:variable-get':
-      return dt("Lists the variables for your site");
-    case 'drush:variable-set':
-      return dt("Set a variable");
-    case 'drush:variable-delete':
-      return dt("Delete a variable.");
-  }
-}
-
-
-/**
  * Implementation of hook_drush_command().
  *
  * In this hook, you specify which commands your
@@ -102,6 +78,7 @@ function drush_variable_get() {
   foreach ($keys as $name) {
     $value = $conf[$name];
     drush_print_pipe("\$variables['$name'] = ". var_export($value, TRUE). ";\n");
+    $returns[$name] = $value;
 
     if ($value === TRUE) {
       $value = 'TRUE';
@@ -121,6 +98,9 @@ function drush_variable_get() {
   
   if (!$found) {
     return drush_set_error('No matching variable found.');
+  }
+  else {
+    return $returns;
   }
 }
 
